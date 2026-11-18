@@ -863,7 +863,7 @@
 
     // Настройки оплаты и очищенный URL для возврата
     const YOOMONEY_WALLET = '4100119686847709';
-    const PRICE = 5; 
+    const PRICE = 75; 
     const CLEAN_URL = location.protocol === 'file:' ? '' : location.origin + location.pathname;
 
     /* ====== НАБОР СМАЙЛИКОВ ====== */
@@ -2046,7 +2046,7 @@
           yesBtn.parentElement.appendChild(kiss);
         }
 
-        // После ответа "Да" получатель выбирает место, занятия и еду
+        // Показываем кастомный текст при клике на "Да"
         setTimeout(() => {
           const sTitle = params.get('successTitle') || 'Рад что не отказалась.';
           let sDesc = params.get('successDesc') || 'Будь готова к {date} в {time}, я приеду за тобой.';
@@ -2055,97 +2055,23 @@
           sDesc = sDesc.replace(/{date}/g, date || 'назначенному дню')
                        .replace(/{time}/g, time || 'назначенному времени');
 
-          const rActIcons = {
-            'Прогулка': '🚶', 'Кино': '🎬', 'Ужин со свечами': '🕯️', 'Киновечер': '🍿',
-            'Настольные игры': '🎲', 'Игры на приставке': '🎮', 'Караоке': '🎤',
-            'Приготовить коктейли': '🍹', 'Массаж при свечах': '💆', 'Вечер без гаджетов': '📵'
-          };
-          const rPlaceOptions = [
-            { val: 'Бильярд', icon: placeIcons['Бильярд'] || '' },
-            { val: 'Ресторан', icon: placeIcons['Ресторан'] || '' },
-            { val: 'Боулинг', icon: placeIcons['Боулинг'] || '' },
-            { val: 'Свидание дома', icon: placeIcons['Свидание дома'] || '' }
-          ];
-          const rActOptions = Object.keys(rActIcons).map(val => ({ val, icon: rActIcons[val] }));
-          const rFoodOptions = Object.keys(foodIcons).map(val => ({ val, icon: foodIcons[val] }));
-
-          let rPlace = '';
-          let rActs = [];
-          let rFoods = [];
-
-          const optHtml = (opts) => opts.map(o =>
-            '<div class="choice-btn" data-val="' + esc(o.val) + '"><span class="icon">' + o.icon + '</span>' + esc(o.val) + '</div>'
-          ).join('');
-
           cardBody.innerHTML = `
-            <div>
-              <h1 style="margin-bottom: 6px; text-align:center;">${esc(sTitle)}</h1>
-              <p class="msg" style="font-size: 16px; text-align:center;">${esc(sDesc)}</p>
-              <p class="step-title" style="margin-top:22px">Теперь выбери, как проведём свидание</p>
-
-              <label style="margin-top:0">Куда пойдём?</label>
-              <div class="choice-grid" id="rPlaceGrid">${optHtml(rPlaceOptions)}</div>
-
-              <label>Что будем делать? (можно выбрать несколько)</label>
-              <div class="choice-grid" id="rActsGrid">${optHtml(rActOptions)}</div>
-
-              <label>Что покушаем? (можно выбрать несколько)</label>
-              <div class="choice-grid" id="rFoodGrid">${optHtml(rFoodOptions)}</div>
-
-              <div class="actions">
-                <button id="choiceDone" type="button">Готово 💞</button>
+            <div style="text-align:center; padding: 20px 0;">
+              <h1 style="margin-bottom: 20px;">${esc(sTitle)}</h1>
+              <p class="msg" style="font-size: 16px;">${esc(sDesc)}</p>
+              
+              <div class="answer" style="margin-top: 30px;">
+                <p class="small">Ты можешь отправить свой ответ отправителю.</p>
+                <button id="share" type="button" style="margin-top: 10px;">Поделиться ответом</button>
               </div>
             </div>
           `;
-
-          const bindGrid = (gridId, isMulti) => {
-            document.querySelectorAll('#' + gridId + ' .choice-btn').forEach(btn => {
-              btn.onclick = () => {
-                const val = btn.dataset.val;
-                if (isMulti) {
-                  const arr = gridId === 'rActsGrid' ? rActs : rFoods;
-                  const idx = arr.indexOf(val);
-                  if (idx === -1) { arr.push(val); btn.classList.add('active'); }
-                  else { arr.splice(idx, 1); btn.classList.remove('active'); }
-                } else {
-                  rPlace = val;
-                  document.querySelectorAll('#rPlaceGrid .choice-btn').forEach(b => b.classList.remove('active'));
-                  btn.classList.add('active');
-                }
-              };
-            });
-          };
-          bindGrid('rPlaceGrid', false);
-          bindGrid('rActsGrid', true);
-          bindGrid('rFoodGrid', true);
-
-          document.getElementById('choiceDone').onclick = () => {
-            if (!rPlace) { alert('Сначала выбери, куда пойдём 🙂'); return; }
-            const fmtLine = (arr, icons, label) => arr.length
-              ? '<p style="text-align:center;margin:8px 0"><b>' + label + ':</b> ' + arr.map(x => (icons[x] || '') + ' ' + esc(x)).join(' • ') + '</p>'
-              : '';
-            cardBody.innerHTML = `
-              <div style="text-align:center; padding: 20px 0;">
-                <h1 style="margin-bottom: 20px;">${esc(sTitle)}</h1>
-                <p class="msg" style="font-size: 16px;">${esc(sDesc)}</p>
-                ${fmtLine([rPlace], placeIcons, 'Куда пойдём')}
-                ${fmtLine(rFoods, foodIcons, 'Что покушаем')}
-                ${fmtLine(rActs, rActIcons, 'Что будем делать')}
-                <div class="answer" style="margin-top: 30px;">
-                  <p class="small">Отправь этот ответ отправителю, чтобы он всё знал.</p>
-                  <button id="share" type="button" style="margin-top: 10px;">Поделиться ответом</button>
-                </div>
-              </div>
-            `;
-            document.getElementById('share').onclick = () => {
-              const parts = ['Куда пойдём: ' + rPlace];
-              if (rFoods.length) parts.push('Что покушаем: ' + rFoods.join(', '));
-              if (rActs.length) parts.push('Что будем делать: ' + rActs.join(', '));
-              const shareText = 'Мой ответ на приглашение: Да!\n' + parts.join(' • ') + '\n' + location.href;
-              if (navigator.share) navigator.share({ text: shareText });
-              else navigator.clipboard.writeText(shareText)
-                .then(() => alert('Ответ скопирован. Отправь его отправителю.'));
-            };
+          
+          document.getElementById('share').onclick = () => {
+            const shareText = `Мой ответ на приглашение: Да\n${location.href}`;
+            if (navigator.share) navigator.share({ text: shareText });
+            else navigator.clipboard.writeText(shareText)
+              .then(() => alert('Ответ скопирован. Отправь его отправителю.'));
           };
         }, delay);
       };
